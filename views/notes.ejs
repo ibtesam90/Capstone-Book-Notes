@@ -1,12 +1,20 @@
 <%- include("partials/header.ejs") %>
 <div class="container">
+    <div class="pt-5">
+        <h2>Welcome to your book reviews, <span><%= user.name %></span></h2>
+    </div>
+    <% if (locals.message) { %>
+        <div>
+            <h5><span style="color: red;"><%= message %></span></h5>
+        </div>
+    <% } else { %>
     <% notes.forEach(note => { %>
         <div class="note pt-5">
             <div class="item row-span">
                 <img src='https://covers.openlibrary.org/b/isbn/<%= note.isbn %>-M.jpg' alt="">
             </div>
             <div class="item">
-                <h4><a href="#"><%= note.title %></a></h4>
+                <h4><a href="\notes\<%= user.id %>\<%= note.book_id %>"><%= note.title %></a></h4>
             </div>
             <div class="item">
                 <h4>Your Rating:</h4>
@@ -27,7 +35,7 @@
             </div>
         </div>
     <% }) %>
-
+    <% } %>
 
 </div>
 <%- include("partials/footer.ejs") %>

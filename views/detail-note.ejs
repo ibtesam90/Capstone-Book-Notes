@@ -1,0 +1,36 @@
+<%- include("partials/header.ejs") %>
+<div class="container">
+    <div class="note pt-5">
+        <div class="item row-span">
+            <img src='https://covers.openlibrary.org/b/isbn/<%= note.isbn %>-L.jpg' alt="">
+        </div>
+        <div class="item">
+            <h4><%= note.title %></h4>
+        </div>
+        <div class="item">
+            <h4>Your Rating:</h4>
+            <p><%= note.rating %></p>
+            <h4>Average Rating</h4>
+            <p><%= averageRating %></p>
+
+        </div>
+        <div class="item">
+            <h4>Author</h4>
+            <p><%= note.author %></p>
+        </div>
+        <div class="item">
+            <h4>Publishing Date</h4>
+            <p><%= note.publishing_date %></p>
+        </div>
+        <div class="item span-3">
+            <h4>Summary</h4>
+            <p><%= note.summary %></p>
+        </div>
+        <div class="item span-3">
+            <h4>Detail Notes</h4>
+            <p><%= note.detailed_notes %></p>
+        </div>
+    </div>
+</div>
+
+<%- include("partials/footer.ejs") %>

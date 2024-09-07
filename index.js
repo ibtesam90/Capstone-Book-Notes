@@ -26,14 +26,14 @@ const db = new pg.Client({
 db.connect();
 
 let currentUserID = 1; //used to get the relevant data. This needs to be valid number in database otherwise there will be errors.
-
+let currentUser = {}
 // quantity is either current or all. current uses currentUserID.
 async function getUserDetails(quantity){
     if (quantity === "current"){
         try {
             const result = await db.query("SELECT * FROM users WHERE id = $1;",[currentUserID]);
             const user = result.rows[0]
-            return user
+            currentUser = user
         } catch (error) {
             console.log(error)
         }
@@ -75,14 +75,29 @@ async function getUserNotes() {
     }
 }
 
+async function getDetailNotes(userID, BookID) {
+    const result = await db.query(`SELECT notes.summary, notes.detailed_notes, notes.user_id, notes.book_id, notes.publishing_date AS npd, books.title,books.author, books.publishing_date, books.isbn, ratings.rating 
+                    FROM notes
+                    LEFT JOIN books ON notes.book_id = books.id
+                    LEFT JOIN ratings ON ratings.user_id = $1 AND  ratings.book_id = $2
+                    WHERE notes.user_id = $1;`,[userID,BookID]);
+    return result.rows[0]
+}
+
+async function getAverageRating(bookID) {
+    const result = await db.query(`SELECT AVG(rating) FROM ratings WHERE book_id = $1`,[bookID]);
+    // console.log(result.rows)
+    return parseFloat(result.rows[0].avg).toFixed(2);
+
+}
+
 app.get("/", async (req , res) => {
-    const currentUserDetail = await getUserDetails("current")
-    res.render("index.ejs",{user : currentUserDetail})
+    await getUserDetails("current")
+    res.render("index.ejs",{user : currentUser})
 })
 
 // handling user related routes here
 app.get("/users", async (req , res) => {
-    const currentUser = await getUserDetails("current");
     const allUsers = await getUserDetails('all');
     // console.log(allUsers);
     res.render("users.ejs",{user:currentUser, usersAll : allUsers})
@@ -103,7 +118,7 @@ app.post("/add-user",  async (req , res) => {
     // console.log(name.toUpperCase());
     
     const dbNameCheck = await getUserByName(name);
-    console.log(dbNameCheck)
+    // console.log(dbNameCheck)
     if (dbNameCheck !=''){
         res.render("add-user.ejs", {message : 'Name Already Exist.'});
     } else {
@@ -118,13 +133,23 @@ app.post("/add-user",  async (req , res) => {
 
 app.get("/notes", async (req , res) => {
     const notes = await getUserNotes();
-    console.log(notes);
-    res.render("notes.ejs",{notes:notes});
-
+    // console.log(notes);
+    if (notes === "No content Found"){
+        res.render("notes.ejs",{user:currentUser, message: notes})
+    } else{
+        res.render("notes.ejs",{notes:notes , user: currentUser});
+    }
 })
 
+app.get("/notes/:user_id/:book_id", async (req , res) => {
+    const reqUserID = req.params.user_id;
+    const reqBookID = req.params.book_id;
+    const noteDetails = await getDetailNotes(reqUserID,reqBookID);
+    const averageBookRating = await getAverageRating(reqBookID);
+    // console.log(averageBookRating);
+    res.render("detail-note.ejs",{user:currentUser, note : noteDetails , averageRating:averageBookRating});
 
-
+})
 
 app.listen(port, () =>{
     console.log(`Server running on port ${port}.`)
