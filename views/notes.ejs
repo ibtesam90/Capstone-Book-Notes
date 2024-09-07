@@ -1,0 +1,33 @@
+<%- include("partials/header.ejs") %>
+<div class="container">
+    <% notes.forEach(note => { %>
+        <div class="note pt-5">
+            <div class="item row-span">
+                <img src='https://covers.openlibrary.org/b/isbn/<%= note.isbn %>-M.jpg' alt="">
+            </div>
+            <div class="item">
+                <h4><a href="#"><%= note.title %></a></h4>
+            </div>
+            <div class="item">
+                <h4>Your Rating:</h4>
+                <p><%= note.rating %></p>
+
+            </div>
+            <div class="item">
+                <h4>Author</h4>
+                <p><%= note.author %></p>
+            </div>
+            <div class="item">
+                <h4>Publishing Date</h4>
+                <p><%= note.publishing_date %></p>
+            </div>
+            <div class="item span-3">
+                <h4>Summary</h4>
+                <p><%= note.summary %></p>
+            </div>
+        </div>
+    <% }) %>
+
+
+</div>
+<%- include("partials/footer.ejs") %>

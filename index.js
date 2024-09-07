@@ -14,7 +14,7 @@ app.use(express.static("public"));
 app.use(bodyParser.urlencoded({ extended: true }));
 
 app.set("view engine", "ejs");
-
+// setting up the database connection
 const db = new pg.Client({
     user: "postgres",
     host : "localhost",
@@ -25,7 +25,9 @@ const db = new pg.Client({
 
 db.connect();
 
-let currentUserID = 1;
+let currentUserID = 1; //used to get the relevant data. This needs to be valid number in database otherwise there will be errors.
+
+// quantity is either current or all. current uses currentUserID.
 async function getUserDetails(quantity){
     if (quantity === "current"){
         try {
@@ -49,16 +51,40 @@ async function getUserDetails(quantity){
     
 }
 
+async function getUserByName(name){
+    const result = await db.query("SELECT name FROM users WHERE LOWER (name) = $1;",[name.toLowerCase()]);
+    if (result.rowCount == 0) {
+        return ""
+    } else {
+        return result.rows[0].name
+    }
+    
+}
+
+async function getUserNotes() {
+    const result = await db.query(`SELECT notes.summary, notes.user_id, notes.publishing_date AS npd, notes.book_id, books.title,books.author, books.publishing_date, books.isbn, ratings.rating 
+        FROM notes
+        LEFT JOIN books ON notes.book_id = books.id
+        LEFT JOIN ratings ON ratings.user_id = notes.user_id AND ratings.book_id = notes.book_id
+        WHERE notes.user_id = $1 ORDER BY books.title ASC;`,[currentUserID]);
+    if (result.rowCount === 0){
+        return "No content Found"
+    } else {
+        const notes = result.rows;
+        return notes
+    }
+}
+
 app.get("/", async (req , res) => {
     const currentUserDetail = await getUserDetails("current")
     res.render("index.ejs",{user : currentUserDetail})
 })
 
+// handling user related routes here
 app.get("/users", async (req , res) => {
     const currentUser = await getUserDetails("current");
     const allUsers = await getUserDetails('all');
-    console.log(allUsers);
-    
+    // console.log(allUsers);
     res.render("users.ejs",{user:currentUser, usersAll : allUsers})
 })
 
@@ -66,6 +92,39 @@ app.get("/users/:id", (req, res) => {
     currentUserID = req.params.id;
     res.redirect("/");
 })
+
+//handling add-user routes here
+app.get("/add-user", (req , res) => {
+    res.render("add-user.ejs");
+})
+
+app.post("/add-user",  async (req , res) => {
+    const name = req.body.name;
+    // console.log(name.toUpperCase());
+    
+    const dbNameCheck = await getUserByName(name);
+    console.log(dbNameCheck)
+    if (dbNameCheck !=''){
+        res.render("add-user.ejs", {message : 'Name Already Exist.'});
+    } else {
+        const result = await db.query("INSERT INTO users (name) VALUES ($1) RETURNING *;",[name])
+        currentUserID = result.rows[0].id;
+        res.redirect("/")
+
+    }    
+})
+
+//handling the notes routes here
+
+app.get("/notes", async (req , res) => {
+    const notes = await getUserNotes();
+    console.log(notes);
+    res.render("notes.ejs",{notes:notes});
+
+})
+
+
+
 
 app.listen(port, () =>{
     console.log(`Server running on port ${port}.`)

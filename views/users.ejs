@@ -3,14 +3,16 @@
 <div class="container">
     <h1>Current User is <span><%= user.name %></span> and your userID is <span><%= user.id %></span></h1>
 </div>
-<div class="container">
+<div class="container users">
     <ul>
        <% usersAll.forEach(singleUser => { %>
         <li><a href="\users\<%= singleUser.id %>"><%= singleUser.name %></a></li>
        <% }) %>
         
     </ul>
-
+</div>
+<div class="container">
+    <a href="/add-user" class="btn btn-primary" tabindex="-1" role="button">Add User</a>
 </div>
 
 
