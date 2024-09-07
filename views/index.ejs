@@ -1,0 +1,24 @@
+<%- include("partials/header.ejs") %>
+<div class="container">
+    <h1>WELCOME <span style="color: red;"><%= user.name %></span> to your Book Notes.</h1>
+</div>
+<div class="container">
+    <h2>What is Book Notes?</h2>
+    <p>Book notes is a website where you can store the summaries of the books you have read and and detailed notes. Furthermore, you can add the rating of the books. All these things are stored in the databased dynamically and returned as the page
+        is requested.
+    </p>
+    <h2>Book Notes Site Map</h2>
+    <h3>Home Page</h3>
+    <p>Currently, you are at the home Page. There is a navigation bar in the header from where you can access the different parts of the website.</p>
+    <h3>Users</h3>
+    <p>The User's page currently holds the users list from where you can select the particular user. Upon selection, you're redirected to home page.</p>
+    <h3>Your Book Notes</h3>
+    <p>The Book Notes' page hold the titles of the books you have read and entered you notes. This page gives you the title of the book and summary of each book. However, detailed notes can be seen upon clicking the book title which will take you to the detailed notes page.</p>
+    <h3>Add Review</h3>
+    <p>The Add new book review page will give you the form to enter a new book review.</p>
+    <h3>About</h3>
+    <p>The About pages also entails the details of the this project and the creator.</p>
+</div>
+
+
+<%- include("partials/footer.ejs") %>

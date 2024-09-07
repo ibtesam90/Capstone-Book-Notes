@@ -1,0 +1,37 @@
+.header{
+    height: 250px;
+    width : 100%;
+    background-image: url("/images/final_header.jpg");
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    display: flex;
+    flex-direction: column;
+    justify-content: end;
+    align-items: center; /* Align items to the bottom */
+    font-weight: 200;
+}
+
+.nav > li {
+    background-color: azure;
+}
+h3{
+    font-size: 3em;
+    font-family: sans-serif;
+    font-style: italic;
+    font-size: x-large;
+    color: orangered;
+}
+
+body{
+    background-color: cadetblue;
+}
+p{
+    text-justify: inter-word;
+}
+
+span{
+    color: orangered;
+    font-style: italic;
+    font-family: 'Gill Sans', 'Gill Sans MT', Calibri, 'Trebuchet MS', sans-serif;
+}
