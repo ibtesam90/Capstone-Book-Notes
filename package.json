@@ -1,0 +1,11 @@
+{
+  "name": "capstone-book-notes",
+  "version": "1.0.0",
+  "description": "Book Notes using postgres database.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Ibtesam",
+  "license": "ISC"
+}
