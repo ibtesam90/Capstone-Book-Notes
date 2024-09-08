@@ -2,11 +2,23 @@ import express from "express";
 import axios from "axios";
 import pg from "pg";
 import bodyParser from "body-parser";
+import session from "express-session";
 
 //creating an app from the express.
 const app = express();
 const port = 3000;
 
+app.use(session({
+    secret: 'your_secret_key', // Change this to a strong unique string
+    resave: false,
+    saveUninitialized: true,
+    cookie: { secure: false } // Use true if using HTTPS
+}));
+
+app.use((req, res, next) => {
+    console.log('Session:', req.session); // Should log the session object
+    next();
+});
 //setting up the public folder for css and images
 app.use(express.static("public"));
 
@@ -28,12 +40,14 @@ db.connect();
 let currentUserID = 1; //used to get the relevant data. This needs to be valid number in database otherwise there will be errors.
 let currentUser = {}
 // quantity is either current or all. current uses currentUserID.
-async function getUserDetails(quantity){
+async function getUserDetails(quantity,req){
+    const currentUserID = req.session.currentUserID;
+    // console.log(currentUserID)
     if (quantity === "current"){
         try {
             const result = await db.query("SELECT * FROM users WHERE id = $1;",[currentUserID]);
             const user = result.rows[0]
-            currentUser = user
+            req.session.currentUser = user
         } catch (error) {
             console.log(error)
         }
@@ -61,7 +75,8 @@ async function getUserByName(name){
     
 }
 
-async function getUserNotes() {
+async function getUserNotes(req) {
+    const currentUserID = req.session.currentUserID;
     const result = await db.query(`SELECT notes.summary, notes.user_id, notes.publishing_date AS npd, notes.book_id, books.title,books.author, books.publishing_date, books.isbn, ratings.rating 
         FROM notes
         LEFT JOIN books ON notes.book_id = books.id
@@ -92,21 +107,27 @@ async function getAverageRating(bookID) {
 }
 
 app.get("/", async (req , res) => {
-    await getUserDetails("current")
-    res.render("index.ejs",{user : currentUser})
+    if (!req.session.currentUserID) {
+        // Assign a default user ID if not set
+        req.session.currentUserID = 4; // Replace '1' with a valid default user ID from your database
+        await getUserDetails("current", req); // Get the details for the default user
+    }
+    await getUserDetails("current",req)
+    // console.log(req.session)
+    res.render("index.ejs",{user : req.session.currentUser})
 })
 
 // handling user related routes here
 app.get("/users", async (req , res) => {
-    const allUsers = await getUserDetails('all');
+    const allUsers = await getUserDetails('all',req);
     // console.log(allUsers);
-    res.render("users.ejs",{user:currentUser, usersAll : allUsers})
+    res.render("users.ejs",{user:req.session.currentUser, usersAll : allUsers})
 })
 
 app.get("/users/:id", (req, res) => {
-    currentUserID = req.params.id;
+    req.session.currentUserID = req.params.id; // Store in session
     res.redirect("/");
-})
+});
 
 //handling add-user routes here
 app.get("/add-user", (req , res) => {
@@ -123,7 +144,7 @@ app.post("/add-user",  async (req , res) => {
         res.render("add-user.ejs", {message : 'Name Already Exist.'});
     } else {
         const result = await db.query("INSERT INTO users (name) VALUES ($1) RETURNING *;",[name])
-        currentUserID = result.rows[0].id;
+        req.session.currentUserID = result.rows[0].id;
         res.redirect("/")
 
     }    
@@ -132,10 +153,10 @@ app.post("/add-user",  async (req , res) => {
 //handling the notes routes here
 
 app.get("/notes", async (req , res) => {
-    const notes = await getUserNotes();
+    const notes = await getUserNotes(req);
     // console.log(notes);
     if (notes === "No content Found"){
-        res.render("notes.ejs",{user:currentUser, message: notes})
+        res.render("notes.ejs",{user:req.session.currentUser, message: notes})
     } else{
         res.render("notes.ejs",{notes:notes , user: currentUser});
     }
@@ -147,7 +168,7 @@ app.get("/notes/:user_id/:book_id", async (req , res) => {
     const noteDetails = await getDetailNotes(reqUserID,reqBookID);
     const averageBookRating = await getAverageRating(reqBookID);
     // console.log(averageBookRating);
-    res.render("detail-note.ejs",{user:currentUser, note : noteDetails , averageRating:averageBookRating});
+    res.render("detail-note.ejs",{user:req.session.currentUser, note : noteDetails , averageRating:averageBookRating});
 
 })
 
@@ -212,7 +233,7 @@ app.post("/add-review", async (req , res) => {
 
     try {
         //check if the notes alreay exist or not
-        const checkNotes = await db.query("SELECT * from notes WHERE book_id = $1 AND user_id = $2;",[formID,currentUserID])
+        const checkNotes = await db.query("SELECT * from notes WHERE book_id = $1 AND user_id = $2;",[formID,req.session.currentUserID])
         // console.log(checkNotes.rows);
         
         if (checkNotes.rowCount >= 1) {
@@ -227,14 +248,14 @@ app.post("/add-review", async (req , res) => {
                 // console.log("entered notes entry block");
                 // console.log("Entered note insert");
                 
-                await db.query("INSERT INTO notes (summary,detailed_notes,user_id,book_id,publishing_date) VALUES ($1,$2,$3,$4,$5);",[formSummary,formDetailNotes,currentUserID,formID,new Date()]);
+                await db.query("INSERT INTO notes (summary,detailed_notes,user_id,book_id,publishing_date) VALUES ($1,$2,$3,$4,$5);",[formSummary,formDetailNotes,req.session.currentUserID,formID,new Date()]);
             } catch (error) {
                 console.log("entered note error catching block");
                 console.error(error.stack)
             }
             try {
                 await db.query(`INSERT INTO ratings (book_id, user_id,rating)
-                    VALUES (${formID},${currentUserID},${formRating});`)
+                    VALUES (${formID},${req.session.currentUserID},${formRating});`)
             } catch (error) {
                 console.log("entered rating error catching block");
                 
