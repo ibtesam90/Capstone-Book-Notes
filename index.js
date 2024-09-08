@@ -179,29 +179,42 @@ app.post("/add-review", async (req , res) => {
     const formSummary = req.body.summary;
     const formDetailNotes = req.body.notes;
     let formID = 0;
+    // console.log(formPublishingDate);
+    
     //Check the id of the Book title
     try {
         const checkTitleID = await db.query("SELECT * from books WHERE LOWER (title) = $1;",[formTitle.toLowerCase()])
+        // console.log(checkTitleID.rows);
+        // console.log(typeof(checkTitleID.rowCount));
+        
+        
         if (checkTitleID.rowCount === 0 || checkTitleID.rowCount > 1) { //check row count to either get the title ID or else enter the data into the books table
-            if (checkTitleID === 0) {
-                const newBookEntry = await db.query(`INSERT INTO books (title, author , publishing_date, isbn 
+            if (checkTitleID.rowCount === 0) {
+                // console.log("entered into the NewBook entry");
+                
+                const newBookEntry = await db.query(`INSERT INTO books (title, author , publishing_date, isbn)
                     VALUES ($1 ,$2 ,$3 ,$4)
-                    RETURNING *`,[formTitle, formAuthor, formPublishingDate, formISBN]);
+                    RETURNING *`,[formTitle,formAuthor,formPublishingDate,formISBN]);
                 formID = newBookEntry.rows[0].id;
             } else {
                 console.log("There are more than one title matching the formTitle in add-review form.");
             }
 
         } else {
+            
+            
             formID = checkTitleID.rows[0].id;          
         }
     } catch (error) {
-        console.log(error.sack)
+        // console.log("Entered the Error cathing code for book title");
+        console.log(error.stack)
     }
 
     try {
         //check if the notes alreay exist or not
-        const checkNotes = await db.query(`SELECT * from notes WHERE book_id = $1 AND user_id = $2;`,[formID,currentUserID])
+        const checkNotes = await db.query("SELECT * from notes WHERE book_id = $1 AND user_id = $2;",[formID,currentUserID])
+        // console.log(checkNotes.rows);
+        
         if (checkNotes.rowCount >= 1) {
             if (checkNotes.rowCount === 1) { //update the records
                 console.log("The notes ");
@@ -211,21 +224,27 @@ app.post("/add-review", async (req , res) => {
             
         } else { //Make new entry in the notes. 
             try {
-                await db.query(`INSERT INTO notes (summary,detailed_notes,user_id,book_id,publishing_date)
-                VALUES ($1,$2,$3,$4,$5);`,[formSummary,formDetailNotes,currentUserID,formID,new Date()])
+                // console.log("entered notes entry block");
+                // console.log("Entered note insert");
+                
+                await db.query("INSERT INTO notes (summary,detailed_notes,user_id,book_id,publishing_date) VALUES ($1,$2,$3,$4,$5);",[formSummary,formDetailNotes,currentUserID,formID,new Date()]);
             } catch (error) {
+                console.log("entered note error catching block");
                 console.error(error.stack)
             }
             try {
                 await db.query(`INSERT INTO ratings (book_id, user_id,rating)
-                    VALUES ($1,$2,$3);`,[formID,currentUserID,formRating])
+                    VALUES (${formID},${currentUserID},${formRating});`)
             } catch (error) {
+                console.log("entered rating error catching block");
+                
                 console.error(error.stack);
                 
             }
             //Once the entry has been made the page needs to be redirected to the detailedR Review page
             // console.log("currentUserID:",currentUserID);
-            res.redirect(`/notes/${currentUserID}/${formID}`);
+            
+            res.redirect("/");
             
             
         }
