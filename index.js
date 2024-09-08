@@ -95,7 +95,7 @@ async function getDetailNotes(userID, BookID) {
                     FROM notes
                     LEFT JOIN books ON notes.book_id = books.id
                     LEFT JOIN ratings ON ratings.user_id = $1 AND  ratings.book_id = $2
-                    WHERE notes.user_id = $1;`,[userID,BookID]);
+                    WHERE notes.book_id = $2;`,[userID,BookID]);
     return result.rows[0]
 }
 
