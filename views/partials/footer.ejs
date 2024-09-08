@@ -1,5 +1,63 @@
 
 </main>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+<!-- Bootstrap JS and dependencies (Optional) -->
+<script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.3/dist/umd/popper.min.js"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+
+<!-- jQuery for AJAX requests -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+<script>
+    $(document).ready(function () {
+        $('#title').on('input', function () {
+            const query = $(this).val();
+            if (query.length > 2) { // Start searching after 3 characters
+                $.ajax({
+                    url: '/search-titles',
+                    method: 'GET',
+                    data: { q: query },
+                    success: function (data) {
+                        let suggestions = '';
+                        data.forEach(item => {
+                            suggestions += `<li class="list-group-item" 
+                                data-title="${item.title}" 
+                                data-author="${item.author}" 
+                                data-date="${item.publishing_date}" 
+                                data-isbn="${item.isbn}">
+                                ${item.title}
+                            </li>`;
+                        });
+                        $('#title-suggestions').html(suggestions).show();
+                    }
+                });
+            } else {
+                $('#title-suggestions').hide();
+            }
+        });
+
+        $(document).on('click', '#title-suggestions li', function () {
+            const title = $(this).data('title');
+            const author = $(this).data('author');
+            const date = $(this).data('date');
+            const isbn = $(this).data('isbn');
+
+            $('#title').val(title);
+            $('#author').val(author);
+            $('#publishingDate').val(date);
+            $('#isbn').val(isbn);
+
+            $('#title-suggestions').hide(); // Hide suggestions list
+        });
+
+        // Hide suggestions when clicking outside the list
+        $(document).click(function (e) {
+            if (!$(e.target).closest('#title').length && !$(e.target).closest('#title-suggestions').length) {
+                $('#title-suggestions').hide();
+            }
+        });
+    });
+</script>
 </body>
 </html>
